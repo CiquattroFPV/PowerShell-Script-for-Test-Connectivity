@@ -1,9 +1,9 @@
 # NetTools Interactive (PowerShell)
 
-**NetTools Interactive** is a PowerShell-based network troubleshooting tool designed for Windows systems.
-It provides an interactive interface to quickly test network connectivity, perform traceroute diagnostics, and run DNS queries using a selected network adapter.
+**NetTools Interactive** is a PowerShell-based network troubleshooting tool for Windows systems.
+It provides an interactive interface to quickly test network connectivity, run traceroute diagnostics, and perform DNS queries using a selected network adapter.
 
-The script is intended for **network engineers, system administrators, and security engineers** who need a fast and repeatable way to diagnose connectivity issues without switching between multiple tools.
+The script is designed for **network engineers, system administrators, and security engineers** who want a fast, repeatable troubleshooting workflow without switching between multiple tools.
 
 ---
 
@@ -17,37 +17,39 @@ The script is intended for **network engineers, system administrators, and secur
   * MAC address
   * IPv4 address
   * Link speed
-* **Traceroute test** with automatic timeout (10 seconds)
+* **Traceroute test** using the Windows `tracert` command
+* Optional **hop name resolution** for traceroute
 * **TCP connectivity testing** using `Test-NetConnection`
-* **DNS resolution testing** using a custom DNS server
+* **DNS resolution testing** using `Resolve-DnsName`
+* Ability to select **DNS record types** (A, MX, TXT, SOA, etc.)
+* Custom **DNS server selection**
 * Built-in **quick test presets**
 * Continuous **interactive loop** for repeated testing
-* Works on **Windows PowerShell 5.x and later**
 
 ---
 
 # Quick Presets
 
-The script includes predefined diagnostic presets for common services:
+The script includes predefined diagnostic presets for common services.
 
-| Preset | Description     | Port         | DNS Query                |
-| ------ | --------------- | ------------ | ------------------------ |
-| 1      | HTTPS           | 443          | A                        |
-| 2      | DNS             | 53           | A                        |
-| 3      | LDAP            | 389          | SRV `_ldap._tcp.domain`  |
-| 4      | LDAPS           | 636          | SRV `_ldaps._tcp.domain` |
-| 5      | RDP             | 3389         | A                        |
-| 6      | SMTP            | 25           | MX                       |
-| 7      | SMTP Submission | 587          | MX                       |
-| 8      | Custom          | User defined | User defined             |
+| Preset | Service         | Port         | DNS Query    |
+| ------ | --------------- | ------------ | ------------ |
+| 1      | HTTPS           | 443          | A            |
+| 2      | DNS             | 53           | A            |
+| 3      | LDAP            | 389          | SRV          |
+| 4      | LDAPS           | 636          | SRV          |
+| 5      | RDP             | 3389         | A            |
+| 6      | SMTP            | 25           | MX           |
+| 7      | SMTP Submission | 587          | MX           |
+| 8      | Custom          | User-defined | User-defined |
 
-These presets allow fast troubleshooting of common infrastructure services.
+These presets allow rapid troubleshooting of common infrastructure services.
 
 ---
 
 # What the Script Tests
 
-The tool performs three primary diagnostics:
+The tool performs three main diagnostics.
 
 ## 1. Network Adapter Information
 
@@ -56,7 +58,7 @@ Displays:
 * Adapter name
 * MAC address
 * IPv4 address
-* Status
+* Adapter status
 * Link speed
 
 This helps confirm which interface is being used for connectivity tests.
@@ -65,34 +67,39 @@ This helps confirm which interface is being used for connectivity tests.
 
 ## 2. Traceroute Test
 
-Runs a traceroute using PowerShell:
+The script runs traceroute using the Windows `tracert` utility.
+
+Example command:
 
 ```
-Test-NetConnection <destination> -TraceRoute
+tracert -d google.com
 ```
 
-A timeout mechanism stops the traceroute if it runs longer than **10 seconds**, allowing the script to continue automatically.
+Users can choose whether to:
 
-This helps quickly identify routing issues or blocked paths.
+* **Disable hostname resolution (`-d`)** for faster results
+* **Enable hostname resolution** to identify intermediate routers
+
+A timeout mechanism stops traceroute automatically after **30 seconds** if the command takes too long.
 
 ---
 
 ## 3. TCP Connectivity Test
 
-The script tests a specific TCP port using:
+The script tests TCP connectivity using:
 
 ```
 Test-NetConnection <host> -Port <port>
 ```
 
-If supported by the system, the script will automatically use the adapter's **source IP address**.
-
-Example output fields include:
+Output includes:
 
 * Remote address
 * Remote port
 * Interface used
-* TCP success status
+* TCP test success status
+
+If supported by the system, the script attempts to use the adapter's **source IP address**.
 
 ---
 
@@ -104,22 +111,39 @@ DNS queries are performed using:
 Resolve-DnsName
 ```
 
-The user can specify:
+Users can specify:
 
-* DNS record type (A, AAAA, MX, SRV, etc.)
-* DNS server to query
+* Hostname
+* DNS record type
+* DNS server
 
-This allows testing DNS resolution independently from the system configuration.
+Supported record types include:
+
+* A
+* AAAA
+* MX
+* TXT
+* CNAME
+* SRV
+* NS
+* SOA
+* PTR
+
+Example:
+
+```
+Resolve-DnsName example.com -Type MX -Server 1.1.1.1
+```
 
 ---
 
 # Requirements
 
-* Windows PowerShell **5.0 or later**
-* Windows **10 / 11 / Server**
-* No administrative privileges required
+* Windows **10 / 11**
+* Windows **Server 2016+**
+* **PowerShell 5.0 or later**
 
-The script relies only on built-in PowerShell networking modules.
+The script relies only on **built-in PowerShell networking modules**, so no additional installation is required.
 
 ---
 
@@ -146,17 +170,17 @@ powershell -ExecutionPolicy Bypass -File .\NetTools-Interactive.ps1
 The script will guide you through the following steps:
 
 1. Choose whether to include virtual adapters
-2. Select a network adapter
-3. Choose a preset or custom test
-4. Run traceroute
+2. Select the network adapter to use
+3. Choose a preset or manual configuration
+4. Run traceroute diagnostics
 5. Perform TCP connectivity testing
-6. Run DNS resolution tests
+6. Execute DNS queries
 
-After each run, you can:
+After each run you can:
 
 * Press **Enter** to repeat the test
-* Press **A** to select another adapter
-* Press **Q** to exit the tool
+* Press **A** to change the network adapter
+* Press **Q** to exit
 
 ---
 
@@ -174,18 +198,10 @@ This tool is useful for:
 Example scenarios:
 
 * Testing HTTPS connectivity to external services
-* Validating LDAP reachability to Active Directory
-* Verifying SMTP server connectivity
+* Verifying LDAP reachability to Active Directory
+* Validating SMTP server access
 * Troubleshooting DNS resolution issues
 * Diagnosing routing problems with traceroute
-
----
-
-# Compatibility Notes
-
-Some older Windows builds may not support the `-SourceAddress` parameter for `Test-NetConnection`.
-
-If this parameter is not available, the script automatically falls back to standard routing behavior.
 
 ---
 
@@ -194,8 +210,8 @@ If this parameter is not available, the script automatically falls back to stand
 Potential enhancements include:
 
 * TCP-based traceroute
-* Multi-port testing
-* Export results to **CSV or JSON**
+* Multi-port connectivity testing
+* JSON or CSV export for troubleshooting reports
 * Non-interactive CLI mode
 * Automatic domain detection for LDAP SRV queries
 

@@ -1,87 +1,123 @@
 # NetTools Interactive (PowerShell)
 
-Interactive PowerShell troubleshooting tool for Windows networking.
+**NetTools Interactive** is a PowerShell-based network troubleshooting tool designed for Windows systems.
+It provides an interactive interface to quickly test network connectivity, perform traceroute diagnostics, and run DNS queries using a selected network adapter.
 
-This script helps quickly gather network adapter information and perform common connectivity and DNS diagnostics from the command line.
-
-It is designed for network engineers, system administrators, and security engineers who want a fast way to test connectivity without navigating through multiple Windows tools.
+The script is intended for **network engineers, system administrators, and security engineers** who need a fast and repeatable way to diagnose connectivity issues without switching between multiple tools.
 
 ---
 
 # Features
 
-* Interactive adapter selection
-* Displays:
+* Interactive **network adapter selection**
+* Option to **include or filter virtual adapters**
+* Automatic display of:
 
-  * Network adapter name
+  * Adapter name
   * MAC address
   * IPv4 address
-* TCP connectivity testing using `Test-NetConnection`
-* DNS resolution using a **specific DNS server**
-* Compatible with multiple Windows PowerShell versions
-* Automatically detects whether `Test-NetConnection -SourceAddress` is supported
+  * Link speed
+* **Traceroute test** with automatic timeout (10 seconds)
+* **TCP connectivity testing** using `Test-NetConnection`
+* **DNS resolution testing** using a custom DNS server
+* Built-in **quick test presets**
+* Continuous **interactive loop** for repeated testing
+* Works on **Windows PowerShell 5.x and later**
 
 ---
 
-# What the Script Does
+# Quick Presets
 
-The script performs three main diagnostic steps.
+The script includes predefined diagnostic presets for common services:
 
-## 1. Adapter Information
+| Preset | Description     | Port         | DNS Query                |
+| ------ | --------------- | ------------ | ------------------------ |
+| 1      | HTTPS           | 443          | A                        |
+| 2      | DNS             | 53           | A                        |
+| 3      | LDAP            | 389          | SRV `_ldap._tcp.domain`  |
+| 4      | LDAPS           | 636          | SRV `_ldaps._tcp.domain` |
+| 5      | RDP             | 3389         | A                        |
+| 6      | SMTP            | 25           | MX                       |
+| 7      | SMTP Submission | 587          | MX                       |
+| 8      | Custom          | User defined | User defined             |
 
-Retrieves information about the selected network adapter:
+These presets allow fast troubleshooting of common infrastructure services.
+
+---
+
+# What the Script Tests
+
+The tool performs three primary diagnostics:
+
+## 1. Network Adapter Information
+
+Displays:
 
 * Adapter name
 * MAC address
 * IPv4 address
+* Status
+* Link speed
 
-This helps confirm which interface is being used for network communication.
+This helps confirm which interface is being used for connectivity tests.
 
 ---
 
-## 2. TCP Connectivity Test
+## 2. Traceroute Test
 
-Uses the PowerShell cmdlet `Test-NetConnection` to verify reachability to a remote host and port.
-
-Example test:
+Runs a traceroute using PowerShell:
 
 ```
-Destination: google.com
-Port: 443
+Test-NetConnection <destination> -TraceRoute
 ```
 
-The script displays:
+A timeout mechanism stops the traceroute if it runs longer than **10 seconds**, allowing the script to continue automatically.
+
+This helps quickly identify routing issues or blocked paths.
+
+---
+
+## 3. TCP Connectivity Test
+
+The script tests a specific TCP port using:
+
+```
+Test-NetConnection <host> -Port <port>
+```
+
+If supported by the system, the script will automatically use the adapter's **source IP address**.
+
+Example output fields include:
 
 * Remote address
+* Remote port
 * Interface used
-* Source address
-* TCP test result
-
-This is useful for verifying firewall rules, connectivity, and service availability.
+* TCP success status
 
 ---
 
-## 3. DNS Resolution Test
+## 4. DNS Resolution Test
 
-Uses the `Resolve-DnsName` cmdlet with a **user-specified DNS server**.
-
-Example:
+DNS queries are performed using:
 
 ```
-Domain: maticmind.it
-Record type: MX
-DNS server: 1.1.1.1
+Resolve-DnsName
 ```
 
-This allows testing DNS resolution independently from the system's configured DNS servers.
+The user can specify:
+
+* DNS record type (A, AAAA, MX, SRV, etc.)
+* DNS server to query
+
+This allows testing DNS resolution independently from the system configuration.
 
 ---
 
 # Requirements
 
-* Windows PowerShell **5.x or later**
-* Windows 10 / Windows 11 / Windows Server
-* Administrative privileges **not required**
+* Windows PowerShell **5.0 or later**
+* Windows **10 / 11 / Server**
+* No administrative privileges required
 
 The script relies only on built-in PowerShell networking modules.
 
@@ -95,62 +131,32 @@ Clone the repository:
 git clone https://github.com/yourusername/nettools-interactive
 ```
 
-Or download the script directly from the repository.
+Or download the script manually.
 
 ---
 
 # Usage
 
-Run the script using PowerShell:
+Run the script from PowerShell:
 
 ```
 powershell -ExecutionPolicy Bypass -File .\NetTools-Interactive.ps1
 ```
 
-The script will guide you through a series of interactive prompts.
+The script will guide you through the following steps:
 
----
+1. Choose whether to include virtual adapters
+2. Select a network adapter
+3. Choose a preset or custom test
+4. Run traceroute
+5. Perform TCP connectivity testing
+6. Run DNS resolution tests
 
-# Interactive Inputs
+After each run, you can:
 
-The script asks the user to provide the following parameters:
-
-| Parameter        | Description                | Example      |
-| ---------------- | -------------------------- | ------------ |
-| Network Adapter  | Adapter to inspect         | Ethernet 3   |
-| Destination Host | Host for connectivity test | google.com   |
-| Port             | TCP port to test           | 443          |
-| DNS Name         | Domain to resolve          | maticmind.it |
-| DNS Record Type  | DNS record type            | MX           |
-| DNS Server       | DNS server to query        | 1.1.1.1      |
-
----
-
-# Example Output
-
-```
---- Adapter info ---
-
-Adapter : Ethernet 3
-Name    : Ethernet
-MAC     : C4-C6-E6-5C-5D-2C
-IP      : 192.168.1.25
-
-
---- Test-NetConnection ---
-
-ComputerName     : google.com
-RemoteAddress    : 142.250.184.14
-RemotePort       : 443
-TcpTestSucceeded : True
-
-
---- Resolve-DnsName ---
-
-Name          Type TTL Section NameExchange
-----          ---- --- ------- ------------
-maticmind.it  MX   3600 Answer mail.maticmind.it
-```
+* Press **Enter** to repeat the test
+* Press **A** to select another adapter
+* Press **Q** to exit the tool
 
 ---
 
@@ -160,39 +166,38 @@ This tool is useful for:
 
 * Network troubleshooting
 * Firewall validation
-* DNS diagnostics
 * Connectivity verification
-* Security testing
-* Quick remote service checks
+* DNS diagnostics
+* Infrastructure health checks
+* Service availability testing
 
-Common examples include:
+Example scenarios:
 
-* Testing HTTPS connectivity
-* Validating DNS MX records
-* Verifying firewall port accessibility
-* Checking network adapter configuration
+* Testing HTTPS connectivity to external services
+* Validating LDAP reachability to Active Directory
+* Verifying SMTP server connectivity
+* Troubleshooting DNS resolution issues
+* Diagnosing routing problems with traceroute
 
 ---
 
-# Compatibility Note
+# Compatibility Notes
 
-Some Windows builds do not support the `-SourceAddress` parameter in `Test-NetConnection`.
+Some older Windows builds may not support the `-SourceAddress` parameter for `Test-NetConnection`.
 
-If the parameter is not available, the script automatically falls back to standard routing behavior.
-
-This ensures compatibility across different Windows versions.
+If this parameter is not available, the script automatically falls back to standard routing behavior.
 
 ---
 
 # Future Improvements
 
-Possible enhancements include:
+Potential enhancements include:
 
-* Adapter selection menu
-* Continuous diagnostic loop
-* Export results to CSV or JSON
-* Multi-host connectivity testing
-* Parallel port testing
+* TCP-based traceroute
+* Multi-port testing
+* Export results to **CSV or JSON**
+* Non-interactive CLI mode
+* Automatic domain detection for LDAP SRV queries
 
 ---
 
